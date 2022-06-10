@@ -27,10 +27,7 @@ fn main() {
 }
 
 #[derive(Component)]
-struct Person;
-
-#[derive(Component)]
-struct Name(String);
+struct Paddle;
 
 // Startup system, a system that runs only once, before all other systems
 fn startup(mut commands: Commands) {
@@ -38,19 +35,31 @@ fn startup(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(UiCameraBundle::default());
 
+    let paddle_y = -300. + 60.0;
+    let paddle_size = Vec3::new(120.0, 20.0, 0.0);
+    let paddle_color = Color::rgb(0.3,0.3,0.7);
+
+    commands.spawn().insert(Paddle).insert_bundle(SpriteBundle {
+        transform: Transform { translation: Vec3::new(0.0, paddle_y, 0.0), scale: paddle_size, ..Default::default() },
+        sprite: Sprite {
+            color: paddle_color,
+            ..Default::default()
+        },
+        ..Default::default()
+    });
     // Render a block
-    commands
-        .spawn()
-        .insert(Person)
-        .insert(Name("Elaina Proctor".to_string()));
-    commands
-        .spawn()
-        .insert(Person)
-        .insert(Name("Renzo Hume".to_string()));
-    commands
-        .spawn()
-        .insert(Person)
-        .insert(Name("Zayna Nieves".to_string()));
+    // commands
+    //     .spawn()
+    //     .insert(Person)
+    //     .insert(Name("Elaina Proctor".to_string()));
+    // commands
+    //     .spawn()
+    //     .insert(Person)
+    //     .insert(Name("Renzo Hume".to_string()));
+    // commands
+    //     .spawn()
+    //     .insert(Person)
+    //     .insert(Name("Zayna Nieves".to_string()));
 }
 
 // Timer is a Type defined in Bevy prelude
@@ -59,13 +68,13 @@ struct GreetTimer(Timer);
 fn greet_people(
     time: Res<Time>, // Time is a resource provided by the default plugins, it gives us the time that has passed since the last update.
     mut timer: ResMut<GreetTimer>,
-    query: Query<&Name, With<Person>>,
+    // query: Query<&Name, With<Person>>,
 ) {
-    if timer.0.tick(time.delta()).just_finished() {
-        for name in query.iter() {
-            println!("Hello {}!", name.0);
-        }
-    }
+    // if timer.0.tick(time.delta()).just_finished() {
+    //     for name in query.iter() {
+    //         println!("Hello {}!", name.0);
+    //     }
+    // }
 }
 
 // First Plugin
