@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = []
+debug = ["bevy-inspector-egui"]
+
 # Enable only a small amount of optimization in debug mode
 [profile.dev]
 opt-level = 1
@@ -17,4 +21,7 @@ opt-level = 3
 # disable dynamic feature before release
 # ref: https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
 bevy = { version = "0.7", features = ["dynamic"]}
+
+# herarchy inspector debug
+bevy-inspector-egui = { version = "0.11", optional = true }
 

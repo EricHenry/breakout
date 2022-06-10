@@ -1,10 +1,29 @@
 use bevy::prelude::*;
 
+// #[cfg(feature = "debug")]
+
+
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugin(HelloPlugin)
-        .run();
+    let mut app = App::new();
+    // set up window, the descriptor will be set by default from the
+    // Defualt plugins if we don't provide this WindowDescriptor struct
+    app.insert_resource(WindowDescriptor {
+        title: "Breakout!".to_string(),
+        width: 700.,
+        height: 800.,
+        ..Default::default()
+    })
+    .add_plugins(DefaultPlugins)
+    .add_plugin(HelloPlugin);
+
+    // debug window inspector
+    #[cfg(feature = "debug")]
+    app.add_plugin(WorldInspecectorPlugin::new());
+
+    // start up system.
+    app.add_startup_system(startup);
+
+    app.run();
 }
 
 #[derive(Component)]
@@ -14,7 +33,12 @@ struct Person;
 struct Name(String);
 
 // Startup system, a system that runs only once, before all other systems
-fn add_people(mut commands: Commands) {
+fn startup(mut commands: Commands) {
+    // Add camera
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(UiCameraBundle::default());
+
+    // Render a block
     commands
         .spawn()
         .insert(Person)
@@ -52,7 +76,7 @@ impl Plugin for HelloPlugin {
     fn build(&self, app: &mut App) {
         // We add in true to from_seconds to indicate that the timer should repeat
         app.insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
-            .add_startup_system(add_people)
+            .add_startup_system(startup)
             .add_system(greet_people);
     }
 }
