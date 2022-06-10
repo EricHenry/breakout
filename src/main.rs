@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
-// #[cfg(feature = "debug")]
-
+#[cfg(feature = "debug")]
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -18,7 +18,7 @@ fn main() {
 
     // debug window inspector
     #[cfg(feature = "debug")]
-    app.add_plugin(WorldInspecectorPlugin::new());
+    app.add_plugin(WorldInspectorPlugin::new());
 
     // start up system.
     app.add_startup_system(startup);
