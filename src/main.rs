@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_inspector_egui::egui::Event::Key;
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
@@ -23,13 +24,15 @@ fn main() {
     // start up system.
     app.add_startup_system(startup);
 
+    app.add_system(move_paddle);
+
     app.run();
 }
 
 #[derive(Component)]
 struct Paddle;
 
-// Startup system, a system that runs only once, before all other systems
+/// Startup system, a system that runs only once, before all other systems
 fn startup(mut commands: Commands) {
     // Add camera
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
@@ -51,34 +54,44 @@ fn startup(mut commands: Commands) {
         },
         ..Default::default()
     });
-    // Render a block
-    // commands
-    //     .spawn()
-    //     .insert(Person)
-    //     .insert(Name("Elaina Proctor".to_string()));
-    // commands
-    //     .spawn()
-    //     .insert(Person)
-    //     .insert(Name("Renzo Hume".to_string()));
-    // commands
-    //     .spawn()
-    //     .insert(Person)
-    //     .insert(Name("Zayna Nieves".to_string()));
 }
 
-// Timer is a Type defined in Bevy prelude
-struct GreetTimer(Timer);
-
-fn greet_people(
-    time: Res<Time>, // Time is a resource provided by the default plugins, it gives us the time that has passed since the last update.
-    mut timer: ResMut<GreetTimer>,
-    // query: Query<&Name, With<Person>>,
+/// System to move the paddle
+fn move_paddle(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<&mut Transform, With<Paddle>>,
 ) {
-    // if timer.0.tick(time.delta()).just_finished() {
-    //     for name in query.iter() {
-    //         println!("Hello {}!", name.0);
-    //     }
-    // }
+    let mut paddle_transformation = query.single_mut(); // single_mut panics
+    let mut direction = 0.0;
+
+    // <, a, or h key presses will move the paddle to the left
+    if keyboard_input.pressed(KeyCode::Left)
+        || keyboard_input.pressed(KeyCode::A)
+        || keyboard_input.pressed(KeyCode::H)
+    {
+        direction -= 1.0;
+    }
+
+    // >, d, or l key presses will move the paddle to the right
+    if keyboard_input.pressed(KeyCode::Right)
+        || keyboard_input.pressed(KeyCode::D)
+        || keyboard_input.pressed(KeyCode::L)
+    {
+        direction += 1.0;
+    }
+
+    let paddle_speed: f32 = 500.0;
+    // Defines the amount of time that should elapse between each physics step.
+    let time_step: f32 = 1.0 / 60.0;
+
+    // calculate the new horizontal paddle position based on player position
+    let new_paddle_position =
+        paddle_transformation.translation.x + direction * paddle_speed * time_step;
+
+    // TODO: figure out bounds of arena
+    // paddle_transformation.translation.x = new_paddle_position.clamp(left_bound, right_bound)
+
+    paddle_transformation.translation.x = new_paddle_position;
 }
 
 // First Plugin
@@ -88,8 +101,8 @@ pub struct HelloPlugin;
 impl Plugin for HelloPlugin {
     fn build(&self, app: &mut App) {
         // We add in true to from_seconds to indicate that the timer should repeat
-        app.insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
-            .add_startup_system(startup)
-            .add_system(greet_people);
+        // app.insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
+        //     .add_startup_system(startup)
+        //     .add_system(greet_people);
     }
 }
