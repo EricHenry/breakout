@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::egui::Event::Key;
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
@@ -32,6 +31,9 @@ fn main() {
 #[derive(Component)]
 struct Paddle;
 
+#[derive(Component)]
+struct Wall;
+
 /// Startup system, a system that runs only once, before all other systems
 fn startup(mut commands: Commands) {
     // Add camera
@@ -52,6 +54,47 @@ fn startup(mut commands: Commands) {
             color: paddle_color,
             ..Default::default()
         },
+        ..Default::default()
+    });
+
+    // left wall
+    commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
+        transform: Transform {
+            translation: Vec3::new(-300., 0.0, 0.0),
+            scale: Vec3::new(20.0, 600., 0.0),
+            ..Default::default()
+        },
+        sprite: Default::default(),
+        ..Default::default()
+    });
+    // right wall
+    commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
+        transform: Transform {
+            translation: Vec3::new(300., 0.0, 0.0),
+            scale: Vec3::new(20.0, 600., 0.0),
+            ..Default::default()
+        },
+        sprite: Default::default(),
+        ..Default::default()
+    });
+    // top wall
+    commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
+        transform: Transform {
+            translation: Vec3::new(0.0, 300., 0.0),
+            scale: Vec3::new(600., 20., 0.0),
+            ..Default::default()
+        },
+        sprite: Default::default(),
+        ..Default::default()
+    });
+    // bottom wall
+    commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
+        transform: Transform {
+            translation: Vec3::new(0.0, -300., 0.0),
+            scale: Vec3::new(600., 20., 0.0),
+            ..Default::default()
+        },
+        sprite: Default::default(),
         ..Default::default()
     });
 }
@@ -99,7 +142,7 @@ pub struct HelloPlugin;
 
 /// Plugins group together systems.
 impl Plugin for HelloPlugin {
-    fn build(&self, app: &mut App) {
+    fn build(&self, _app: &mut App) {
         // We add in true to from_seconds to indicate that the timer should repeat
         // app.insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
         //     .add_startup_system(startup)
