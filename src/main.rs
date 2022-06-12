@@ -6,7 +6,7 @@ use bevy_inspector_egui::WorldInspectorPlugin;
 fn main() {
     let mut app = App::new();
     // set up window, the descriptor will be set by default from the
-    // Defualt plugins if we don't provide this WindowDescriptor struct
+    // Default plugins if we don't provide this WindowDescriptor struct
     app.insert_resource(WindowDescriptor {
         title: "Breakout!".to_string(),
         width: 700.,
@@ -37,10 +37,14 @@ fn startup(mut commands: Commands) {
 
     let paddle_y = -300. + 60.0;
     let paddle_size = Vec3::new(120.0, 20.0, 0.0);
-    let paddle_color = Color::rgb(0.3,0.3,0.7);
+    let paddle_color = Color::rgb(0.3, 0.3, 0.7);
 
     commands.spawn().insert(Paddle).insert_bundle(SpriteBundle {
-        transform: Transform { translation: Vec3::new(0.0, paddle_y, 0.0), scale: paddle_size, ..Default::default() },
+        transform: Transform {
+            translation: Vec3::new(0.0, paddle_y, 0.0),
+            scale: paddle_size,
+            ..Default::default()
+        },
         sprite: Sprite {
             color: paddle_color,
             ..Default::default()
