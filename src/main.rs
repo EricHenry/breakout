@@ -102,6 +102,7 @@ fn startup(mut commands: Commands) {
 /// System to move the paddle
 fn move_paddle(
     keyboard_input: Res<Input<KeyCode>>,
+    time: Res<Time>,
     mut query: Query<&mut Transform, With<Paddle>>,
 ) {
     let mut paddle_transformation = query.single_mut(); // single_mut panics
@@ -125,7 +126,9 @@ fn move_paddle(
 
     let paddle_speed: f32 = 500.0;
     // Defines the amount of time that should elapse between each physics step.
-    let time_step: f32 = 1.0 / 60.0;
+    // using delta_seconds allows us to keep time between changing frame rates. I don't quite understand this fully yet.
+    let time_step: f32 = time.delta_seconds();
+    println!("time step, (delta seconds): {}", time_step);
 
     // calculate the new horizontal paddle position based on player position
     let new_paddle_position =
