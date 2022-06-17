@@ -1,7 +1,21 @@
+use bevy::math::const_vec3;
 use bevy::prelude::*;
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
+
+const WALL_WIDTH: f32 = 900.;
+const WALL_HEIGHT: f32 = 600.;
+const WALL_THICKNESS: f32 = 20.;
+// y coordinates
+const WALL_BOTTOM: f32 = -300.;
+const WALL_TOP: f32 = 300.;
+// x coordinates
+const WALL_LEFT: f32 = -450.;
+const WALL_RIGHT: f32 = 450.;
+
+const PADDLE_SIZE: Vec3 = const_vec3!([120.0, 20.0, 0.0]);
+const PADDLE_COLOR: Color = Color::rgb(0.3, 0.3, 0.7);
 
 fn main() {
     let mut app = App::new();
@@ -9,7 +23,7 @@ fn main() {
     // Default plugins if we don't provide this WindowDescriptor struct
     app.insert_resource(WindowDescriptor {
         title: "Breakout!".to_string(),
-        width: 700.,
+        width: 1000.,
         height: 800.,
         ..Default::default()
     })
@@ -40,18 +54,16 @@ fn startup(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(UiCameraBundle::default());
 
-    let paddle_y = -300. + 60.0;
-    let paddle_size = Vec3::new(120.0, 20.0, 0.0);
-    let paddle_color = Color::rgb(0.3, 0.3, 0.7);
+    let paddle_y: f32 = WALL_BOTTOM + 60.0;
 
     commands.spawn().insert(Paddle).insert_bundle(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(0.0, paddle_y, 0.0),
-            scale: paddle_size,
+            scale: PADDLE_SIZE,
             ..Default::default()
         },
         sprite: Sprite {
-            color: paddle_color,
+            color: PADDLE_COLOR,
             ..Default::default()
         },
         ..Default::default()
@@ -60,8 +72,8 @@ fn startup(mut commands: Commands) {
     // left wall
     commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
         transform: Transform {
-            translation: Vec3::new(-300., 0.0, 0.0),
-            scale: Vec3::new(20.0, 600., 0.0),
+            translation: Vec3::new(WALL_LEFT, 0.0, 0.0),
+            scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT, 0.0),
             ..Default::default()
         },
         sprite: Default::default(),
@@ -70,8 +82,8 @@ fn startup(mut commands: Commands) {
     // right wall
     commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
         transform: Transform {
-            translation: Vec3::new(300., 0.0, 0.0),
-            scale: Vec3::new(20.0, 600., 0.0),
+            translation: Vec3::new(WALL_RIGHT, 0.0, 0.0),
+            scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT, 0.0),
             ..Default::default()
         },
         sprite: Default::default(),
@@ -80,8 +92,8 @@ fn startup(mut commands: Commands) {
     // top wall
     commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
         transform: Transform {
-            translation: Vec3::new(0.0, 300., 0.0),
-            scale: Vec3::new(600., 20., 0.0),
+            translation: Vec3::new(0.0, WALL_TOP, 0.0),
+            scale: Vec3::new(WALL_WIDTH, WALL_THICKNESS, 0.0),
             ..Default::default()
         },
         sprite: Default::default(),
@@ -90,8 +102,8 @@ fn startup(mut commands: Commands) {
     // bottom wall
     commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
         transform: Transform {
-            translation: Vec3::new(0.0, -300., 0.0),
-            scale: Vec3::new(600., 20., 0.0),
+            translation: Vec3::new(0.0, WALL_BOTTOM, 0.0),
+            scale: Vec3::new(WALL_WIDTH, WALL_THICKNESS, 0.0),
             ..Default::default()
         },
         sprite: Default::default(),
@@ -128,11 +140,24 @@ fn move_paddle(
     // Defines the amount of time that should elapse between each physics step.
     // using delta_seconds allows us to keep time between changing frame rates. I don't quite understand this fully yet.
     let time_step: f32 = time.delta_seconds();
-    println!("time step, (delta seconds): {}", time_step);
 
     // calculate the new horizontal paddle position based on player position
     let new_paddle_position =
         paddle_transformation.translation.x + direction * paddle_speed * time_step;
+
+    println!(
+        "delta_sec: {} \
+         direction: {} \
+         paddle_speed: {} \
+         current_x: {} \
+         new_x: {}
+        ",
+        time_step,
+        direction,
+        paddle_speed,
+        paddle_transformation.translation.x,
+        new_paddle_position
+    );
 
     // TODO: figure out bounds of arena
     // paddle_transformation.translation.x = new_paddle_position.clamp(left_bound, right_bound)
