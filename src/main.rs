@@ -14,8 +14,11 @@ const WALL_TOP: f32 = 300.;
 const WALL_LEFT: f32 = -450.;
 const WALL_RIGHT: f32 = 450.;
 
-const PADDLE_SIZE: Vec3 = const_vec3!([120.0, 20.0, 0.0]);
+const PADDLE_LENGTH: f32 = 120.;
+const PADDLE_WIDTH: f32 = 20.;
+const PADDLE_SIZE: Vec3 = const_vec3!([PADDLE_LENGTH, PADDLE_WIDTH, 0.0]);
 const PADDLE_COLOR: Color = Color::rgb(0.3, 0.3, 0.7);
+const PADDLE_SPEED: f32 = 500.0;
 
 fn main() {
     let mut app = App::new();
@@ -73,7 +76,7 @@ fn startup(mut commands: Commands) {
     commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(WALL_LEFT, 0.0, 0.0),
-            scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT, 0.0),
+            scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT + WALL_THICKNESS, 1.0),
             ..Default::default()
         },
         sprite: Default::default(),
@@ -83,7 +86,7 @@ fn startup(mut commands: Commands) {
     commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(WALL_RIGHT, 0.0, 0.0),
-            scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT, 0.0),
+            scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT + WALL_THICKNESS, 1.0),
             ..Default::default()
         },
         sprite: Default::default(),
@@ -93,7 +96,7 @@ fn startup(mut commands: Commands) {
     commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(0.0, WALL_TOP, 0.0),
-            scale: Vec3::new(WALL_WIDTH, WALL_THICKNESS, 0.0),
+            scale: Vec3::new(WALL_WIDTH + WALL_THICKNESS, WALL_THICKNESS, 1.0),
             ..Default::default()
         },
         sprite: Default::default(),
@@ -103,7 +106,7 @@ fn startup(mut commands: Commands) {
     commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(0.0, WALL_BOTTOM, 0.0),
-            scale: Vec3::new(WALL_WIDTH, WALL_THICKNESS, 0.0),
+            scale: Vec3::new(WALL_WIDTH + WALL_THICKNESS, WALL_THICKNESS, 1.0),
             ..Default::default()
         },
         sprite: Default::default(),
@@ -136,33 +139,21 @@ fn move_paddle(
         direction += 1.0;
     }
 
-    let paddle_speed: f32 = 500.0;
     // Defines the amount of time that should elapse between each physics step.
     // using delta_seconds allows us to keep time between changing frame rates. I don't quite understand this fully yet.
     let time_step: f32 = time.delta_seconds();
 
     // calculate the new horizontal paddle position based on player position
     let new_paddle_position =
-        paddle_transformation.translation.x + direction * paddle_speed * time_step;
+        paddle_transformation.translation.x + direction * PADDLE_SPEED * time_step;
 
-    println!(
-        "delta_sec: {} \
-         direction: {} \
-         paddle_speed: {} \
-         current_x: {} \
-         new_x: {}
-        ",
-        time_step,
-        direction,
-        paddle_speed,
-        paddle_transformation.translation.x,
-        new_paddle_position
-    );
+    // need to calculate half of the paddle size and wall thickness because they are aligned to the center of the block
+    let half_paddle_size = PADDLE_SIZE.x / 2.;
+    let half_wall_thickness = WALL_THICKNESS / 2.;
+    let left_bound = WALL_LEFT + half_wall_thickness + half_paddle_size;
+    let right_bound = WALL_RIGHT - half_wall_thickness - half_paddle_size;
 
-    // TODO: figure out bounds of arena
-    // paddle_transformation.translation.x = new_paddle_position.clamp(left_bound, right_bound)
-
-    paddle_transformation.translation.x = new_paddle_position;
+    paddle_transformation.translation.x = new_paddle_position.clamp(left_bound, right_bound);
 }
 
 // First Plugin
