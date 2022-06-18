@@ -52,11 +52,65 @@ struct Paddle;
 #[derive(Component)]
 struct Wall;
 
+#[derive(Bundle)]
+struct WallBundle {
+    // I can nest bundles inside of bundles
+    #[bundle]
+    sprite: SpriteBundle,
+    collider: Collider,
+}
+
+#[derive(Component)]
+struct Ball;
+
 #[derive(Component)]
 struct Velocity(Vec2);
 
 #[derive(Component)]
-struct Ball;
+struct Collider;
+
+enum WallLocation {
+    Top,
+    Bottom,
+    Left,
+    Right,
+}
+
+// IMPLEMENT FROM instead of new
+impl WallBundle {
+    fn new(location: WallLocation) -> WallBundle {
+        let transform = match location {
+            WallLocation::Top => Transform {
+                translation: Vec3::new(0.0, WALL_TOP, 0.0),
+                scale: Vec3::new(WALL_WIDTH + WALL_THICKNESS, WALL_THICKNESS, 1.0),
+                ..Default::default()
+            },
+            WallLocation::Bottom => Transform {
+                translation: Vec3::new(0.0, WALL_BOTTOM, 0.0),
+                scale: Vec3::new(WALL_WIDTH + WALL_THICKNESS, WALL_THICKNESS, 1.0),
+                ..Default::default()
+            },
+            WallLocation::Left => Transform {
+                translation: Vec3::new(WALL_LEFT, 0.0, 0.0),
+                scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT + WALL_THICKNESS, 1.0),
+                ..Default::default()
+            },
+            WallLocation::Right => Transform {
+                translation: Vec3::new(WALL_RIGHT, 0.0, 0.0),
+                scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT + WALL_THICKNESS, 1.0),
+                ..Default::default()
+            },
+        };
+
+        WallBundle {
+            sprite: SpriteBundle {
+                transform,
+                ..Default::default()
+            },
+            collider: Collider,
+        }
+    }
+}
 
 /// Startup system, a system that runs only once, before all other systems
 fn startup(mut commands: Commands) {
@@ -94,46 +148,10 @@ fn startup(mut commands: Commands) {
         ..Default::default()
     });
 
-    // left wall
-    commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
-        transform: Transform {
-            translation: Vec3::new(WALL_LEFT, 0.0, 0.0),
-            scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT + WALL_THICKNESS, 1.0),
-            ..Default::default()
-        },
-        sprite: Default::default(),
-        ..Default::default()
-    });
-    // right wall
-    commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
-        transform: Transform {
-            translation: Vec3::new(WALL_RIGHT, 0.0, 0.0),
-            scale: Vec3::new(WALL_THICKNESS, WALL_HEIGHT + WALL_THICKNESS, 1.0),
-            ..Default::default()
-        },
-        sprite: Default::default(),
-        ..Default::default()
-    });
-    // top wall
-    commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
-        transform: Transform {
-            translation: Vec3::new(0.0, WALL_TOP, 0.0),
-            scale: Vec3::new(WALL_WIDTH + WALL_THICKNESS, WALL_THICKNESS, 1.0),
-            ..Default::default()
-        },
-        sprite: Default::default(),
-        ..Default::default()
-    });
-    // bottom wall
-    commands.spawn().insert(Wall).insert_bundle(SpriteBundle {
-        transform: Transform {
-            translation: Vec3::new(0.0, WALL_BOTTOM, 0.0),
-            scale: Vec3::new(WALL_WIDTH + WALL_THICKNESS, WALL_THICKNESS, 1.0),
-            ..Default::default()
-        },
-        sprite: Default::default(),
-        ..Default::default()
-    });
+    commands.spawn_bundle(WallBundle::new(WallLocation::Right));
+    commands.spawn_bundle(WallBundle::new(WallLocation::Left));
+    commands.spawn_bundle(WallBundle::new(WallLocation::Top));
+    commands.spawn_bundle(WallBundle::new(WallLocation::Bottom));
 }
 
 /// System to move the paddle
