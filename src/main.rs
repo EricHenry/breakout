@@ -14,12 +14,17 @@ const WALL_TOP: f32 = 300.;
 const WALL_LEFT: f32 = -450.;
 const WALL_RIGHT: f32 = 450.;
 
+// Paddle
 const PADDLE_TO_WALL_BOTTOM: f32 = 60.;
 const PADDLE_LENGTH: f32 = 120.;
 const PADDLE_WIDTH: f32 = 20.;
 const PADDLE_SIZE: Vec3 = const_vec3!([PADDLE_LENGTH, PADDLE_WIDTH, 0.0]);
 const PADDLE_COLOR: Color = Color::rgb(0.3, 0.3, 0.7);
 const PADDLE_SPEED: f32 = 500.0;
+
+// Ball
+const BALL_STARTING_POSITION: Vec3 = const_vec3!([0., -50., 1.0]);
+const BALL_SIZE: Vec3 = const_vec3!([30., 30., 0.]);
 
 fn main() {
     let mut app = App::new();
@@ -31,6 +36,7 @@ fn main() {
         height: 800.,
         ..Default::default()
     })
+    // DefaultPlugins has a system that will render sprites
     .add_plugins(DefaultPlugins)
     .add_plugin(HelloPlugin);
 
@@ -76,9 +82,8 @@ enum WallLocation {
     Right,
 }
 
-// IMPLEMENT FROM instead of new
-impl WallBundle {
-    fn new(location: WallLocation) -> WallBundle {
+impl From<WallLocation> for WallBundle {
+    fn from(location: WallLocation) -> WallBundle {
         let transform = match location {
             WallLocation::Top => Transform {
                 translation: Vec3::new(0.0, WALL_TOP, 0.0),
@@ -120,6 +125,7 @@ fn startup(mut commands: Commands) {
 
     let paddle_y: f32 = WALL_BOTTOM + PADDLE_TO_WALL_BOTTOM;
 
+    // Create Paddle
     commands.spawn().insert(Paddle).insert_bundle(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(0.0, paddle_y, 0.0),
@@ -133,12 +139,11 @@ fn startup(mut commands: Commands) {
         ..Default::default()
     });
 
-    let ball_starting_position = Vec3::new(0., -50., 1.0);
-    let ball_size = Vec3::new(30., 30., 0.);
+    // Create Ball
     commands.spawn().insert(Ball).insert_bundle(SpriteBundle {
         transform: Transform {
-            translation: ball_starting_position,
-            scale: ball_size,
+            translation: BALL_STARTING_POSITION,
+            scale: BALL_SIZE,
             ..Default::default()
         },
         sprite: Sprite {
@@ -148,10 +153,11 @@ fn startup(mut commands: Commands) {
         ..Default::default()
     });
 
-    commands.spawn_bundle(WallBundle::new(WallLocation::Right));
-    commands.spawn_bundle(WallBundle::new(WallLocation::Left));
-    commands.spawn_bundle(WallBundle::new(WallLocation::Top));
-    commands.spawn_bundle(WallBundle::new(WallLocation::Bottom));
+    // Create Walls
+    commands.spawn_bundle(WallBundle::from(WallLocation::Right));
+    commands.spawn_bundle(WallBundle::from(WallLocation::Left));
+    commands.spawn_bundle(WallBundle::from(WallLocation::Top));
+    commands.spawn_bundle(WallBundle::from(WallLocation::Bottom));
 }
 
 /// System to move the paddle
