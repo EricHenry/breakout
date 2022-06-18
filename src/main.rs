@@ -14,6 +14,7 @@ const WALL_TOP: f32 = 300.;
 const WALL_LEFT: f32 = -450.;
 const WALL_RIGHT: f32 = 450.;
 
+const PADDLE_TO_WALL_BOTTOM: f32 = 60.;
 const PADDLE_LENGTH: f32 = 120.;
 const PADDLE_WIDTH: f32 = 20.;
 const PADDLE_SIZE: Vec3 = const_vec3!([PADDLE_LENGTH, PADDLE_WIDTH, 0.0]);
@@ -51,18 +52,39 @@ struct Paddle;
 #[derive(Component)]
 struct Wall;
 
+#[derive(Component)]
+struct Velocity(Vec2);
+
+#[derive(Component)]
+struct Ball;
+
 /// Startup system, a system that runs only once, before all other systems
 fn startup(mut commands: Commands) {
     // Add camera
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(UiCameraBundle::default());
 
-    let paddle_y: f32 = WALL_BOTTOM + 60.0;
+    let paddle_y: f32 = WALL_BOTTOM + PADDLE_TO_WALL_BOTTOM;
 
     commands.spawn().insert(Paddle).insert_bundle(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(0.0, paddle_y, 0.0),
             scale: PADDLE_SIZE,
+            ..Default::default()
+        },
+        sprite: Sprite {
+            color: PADDLE_COLOR,
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+
+    let ball_starting_position = Vec3::new(0., -50., 1.0);
+    let ball_size = Vec3::new(30., 30., 0.);
+    commands.spawn().insert(Ball).insert_bundle(SpriteBundle {
+        transform: Transform {
+            translation: ball_starting_position,
+            scale: ball_size,
             ..Default::default()
         },
         sprite: Sprite {

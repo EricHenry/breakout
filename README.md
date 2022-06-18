@@ -6,7 +6,7 @@ A game that breaks bricks to score points! Don't let the ball touch the lava.
 - [X] Render paddle
 - [X] Move paddle
 - [X] create arena walls
-- [ ] add collision between paddle and wall
-- [ ] Create ball
+- [X] add collision between paddle and wall
+- [X] Create ball
 - [ ] have ball move on screen
 - [ ] add collision on ball
