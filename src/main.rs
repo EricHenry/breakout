@@ -1,5 +1,6 @@
-use bevy::math::const_vec3;
+use bevy::math::{const_vec2, const_vec3};
 use bevy::prelude::*;
+use bevy::sprite::collide_aabb::{collide, Collision};
 
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
@@ -25,6 +26,8 @@ const PADDLE_SPEED: f32 = 500.0;
 // Ball
 const BALL_STARTING_POSITION: Vec3 = const_vec3!([0., -50., 1.0]);
 const BALL_SIZE: Vec3 = const_vec3!([30., 30., 0.]);
+const BALL_SPEED: f32 = 400.;
+const INITIAL_BALL_DIRECTION: Vec2 = const_vec2!([0.5, -0.5]);
 
 fn main() {
     let mut app = App::new();
@@ -47,16 +50,20 @@ fn main() {
     // start up system.
     app.add_startup_system(startup);
 
-    app.add_system(move_paddle);
+    app.add_system_set(
+        SystemSet::new()
+            .with_system(check_collisions)
+            .with_system(move_paddle.before(check_collisions))
+            .with_system(apply_velocity.before(check_collisions)),
+    );
+    // app.add_system(move_paddle);
+    // app.add_system(apply_velocity);
 
     app.run();
 }
 
 #[derive(Component)]
 struct Paddle;
-
-#[derive(Component)]
-struct Wall;
 
 #[derive(Bundle)]
 struct WallBundle {
@@ -69,7 +76,7 @@ struct WallBundle {
 #[derive(Component)]
 struct Ball;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Velocity(Vec2);
 
 #[derive(Component)]
@@ -126,32 +133,40 @@ fn startup(mut commands: Commands) {
     let paddle_y: f32 = WALL_BOTTOM + PADDLE_TO_WALL_BOTTOM;
 
     // Create Paddle
-    commands.spawn().insert(Paddle).insert_bundle(SpriteBundle {
-        transform: Transform {
-            translation: Vec3::new(0.0, paddle_y, 0.0),
-            scale: PADDLE_SIZE,
+    commands
+        .spawn()
+        .insert(Paddle)
+        .insert(Collider)
+        .insert_bundle(SpriteBundle {
+            transform: Transform {
+                translation: Vec3::new(0.0, paddle_y, 0.0),
+                scale: PADDLE_SIZE,
+                ..Default::default()
+            },
+            sprite: Sprite {
+                color: PADDLE_COLOR,
+                ..Default::default()
+            },
             ..Default::default()
-        },
-        sprite: Sprite {
-            color: PADDLE_COLOR,
-            ..Default::default()
-        },
-        ..Default::default()
-    });
+        });
 
     // Create Ball
-    commands.spawn().insert(Ball).insert_bundle(SpriteBundle {
-        transform: Transform {
-            translation: BALL_STARTING_POSITION,
-            scale: BALL_SIZE,
+    commands
+        .spawn()
+        .insert(Ball)
+        .insert(Velocity(INITIAL_BALL_DIRECTION.normalize() * BALL_SPEED))
+        .insert_bundle(SpriteBundle {
+            transform: Transform {
+                translation: BALL_STARTING_POSITION,
+                scale: BALL_SIZE,
+                ..Default::default()
+            },
+            sprite: Sprite {
+                color: PADDLE_COLOR,
+                ..Default::default()
+            },
             ..Default::default()
-        },
-        sprite: Sprite {
-            color: PADDLE_COLOR,
-            ..Default::default()
-        },
-        ..Default::default()
-    });
+        });
 
     // Create Walls
     commands.spawn_bundle(WallBundle::from(WallLocation::Right));
@@ -200,6 +215,64 @@ fn move_paddle(
     let right_bound = WALL_RIGHT - half_wall_thickness - half_paddle_size;
 
     paddle_transformation.translation.x = new_paddle_position.clamp(left_bound, right_bound);
+}
+
+fn apply_velocity(mut velocity_query: Query<(&mut Transform, &Velocity)>, time: Res<Time>) {
+    let time_step = time.delta_seconds();
+    for (mut transform, velocity) in velocity_query.iter_mut() {
+        // println!(
+        //     "velocity: {:#?}, \ntime_step: {}, \ntranslation: {}",
+        //     velocity, time_step, transform.translation
+        // );
+        transform.translation.x += velocity.0.x * time_step;
+        transform.translation.y += velocity.0.y * time_step;
+    }
+}
+
+fn check_collisions(
+    mut ball_query: Query<(&mut Velocity, &Transform), With<Ball>>,
+    collider_query: Query<(Entity, &Transform), With<Collider>>,
+) {
+    let (mut ball_velocity, ball_transform) = ball_query.single_mut();
+    let ball_scale = ball_transform.scale.truncate();
+
+    for (collider_entity, collider_transform) in collider_query.iter() {
+        if let Some(collistion) = collide(
+            ball_transform.translation,
+            ball_scale,
+            collider_transform.translation,
+            collider_transform.scale.truncate(),
+        ) {
+            let mut reflect_x = false;
+            let mut reflect_y = false;
+
+            // change the velocity of the ball if the collision happens on the side
+            // where the ball is traveling
+            //
+            // O = ball
+            //      ____________
+            //      |          |  <- O
+            //      ------------
+            //
+            // when moving towards the block the ball has a negative x velocity, when it hits the right wall
+            // it will match as Collision::Right
+            match collistion {
+                Collision::Left => reflect_x = ball_velocity.0.x > 0.0,
+                Collision::Right => reflect_x = ball_velocity.0.x < 0.0,
+                Collision::Top => reflect_y = ball_velocity.0.y < 0.0,
+                Collision::Bottom => reflect_y = ball_velocity.0.y > 0.0,
+                Collision::Inside => { /* Noop */ }
+            };
+
+            // invert the x and y velocities if a collision happened
+            if reflect_x {
+                ball_velocity.0.x = -ball_velocity.0.x
+            }
+            if reflect_y {
+                ball_velocity.0.y = -ball_velocity.0.y
+            }
+        }
+    }
 }
 
 // First Plugin

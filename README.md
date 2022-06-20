@@ -8,5 +8,9 @@ A game that breaks bricks to score points! Don't let the ball touch the lava.
 - [X] create arena walls
 - [X] add collision between paddle and wall
 - [X] Create ball
-- [ ] have ball move on screen
-- [ ] add collision on ball
+- [X] Give ball velocity
+- [X] Handle Collision
+- [ ] Create Bricks
+- [ ] Floor is lava
+- [ ] Score board
+- [ ] Game states
