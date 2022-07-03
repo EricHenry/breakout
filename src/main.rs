@@ -124,6 +124,9 @@ impl From<WallLocation> for WallBundle {
     }
 }
 
+/// Systems
+///
+
 /// Startup system, a system that runs only once, before all other systems
 fn startup(mut commands: Commands) {
     // Add camera
@@ -250,7 +253,7 @@ fn check_collisions(
             // where the ball is traveling
             //
             // O = ball
-            //      ____________
+            //      ------------
             //      |          |  <- O
             //      ------------
             //
