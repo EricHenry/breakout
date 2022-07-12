@@ -11,6 +11,7 @@ A game that breaks bricks to score points! Don't let the ball touch the lava.
 - [X] Give ball velocity
 - [X] Handle Collision
 - [ ] Create Bricks
+- [ ] Break Bricks
 - [ ] Floor is lava
 - [ ] Score board
 - [ ] Game states

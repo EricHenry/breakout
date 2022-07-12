@@ -56,8 +56,6 @@ fn main() {
             .with_system(move_paddle.before(check_collisions))
             .with_system(apply_velocity.before(check_collisions)),
     );
-    // app.add_system(move_paddle);
-    // app.add_system(apply_velocity);
 
     app.run();
 }
@@ -81,6 +79,9 @@ struct Velocity(Vec2);
 
 #[derive(Component)]
 struct Collider;
+
+#[derive(Component)]
+struct Brick;
 
 enum WallLocation {
     Top,
@@ -239,7 +240,7 @@ fn check_collisions(
     let (mut ball_velocity, ball_transform) = ball_query.single_mut();
     let ball_scale = ball_transform.scale.truncate();
 
-    for (collider_entity, collider_transform) in collider_query.iter() {
+    for (_collider_entity, collider_transform) in collider_query.iter() {
         if let Some(collistion) = collide(
             ball_transform.translation,
             ball_scale,
