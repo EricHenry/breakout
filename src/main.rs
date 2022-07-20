@@ -29,6 +29,13 @@ const BALL_SIZE: Vec3 = const_vec3!([30., 30., 0.]);
 const BALL_SPEED: f32 = 400.;
 const INITIAL_BALL_DIRECTION: Vec2 = const_vec2!([0.5, -0.5]);
 
+// Brick
+const BRICK_STARTING_POSITION: Vec3 = const_vec3!([0., 0., 0.]);
+const BRICK_LENGTH: f32 = 150.;
+const BRICK_WIDTH: f32 = 40.;
+const BRICK_SIZE: Vec3 = const_vec3!([BRICK_LENGTH, BRICK_WIDTH, 0.]);
+const BRICK_COLOR: Color = Color::rgb(0.7, 0.3, 0.7);
+
 fn main() {
     let mut app = App::new();
     // set up window, the descriptor will be set by default from the
@@ -149,6 +156,24 @@ fn startup(mut commands: Commands) {
             },
             sprite: Sprite {
                 color: PADDLE_COLOR,
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+
+    // create Brick
+    commands
+        .spawn()
+        .insert(Brick)
+        .insert(Collider)
+        .insert_bundle(SpriteBundle {
+            transform: Transform {
+                translation: BRICK_STARTING_POSITION,
+                scale: BRICK_SIZE,
+                ..Default::default()
+            },
+            sprite: Sprite {
+                color: BRICK_COLOR,
                 ..Default::default()
             },
             ..Default::default()
