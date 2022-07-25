@@ -29,11 +29,13 @@ const BALL_SPEED: f32 = 400.;
 const INITIAL_BALL_DIRECTION: Vec2 = const_vec2!([0.5, -0.5]);
 
 // Brick
-const BRICK_STARTING_POSITION: Vec3 = const_vec3!([0., 0., 0.]);
+// const BRICK_STARTING_POSITION: Vec3 = const_vec3!([0., 0., 0.]);
 const BRICK_LENGTH: f32 = 130.;
 const BRICK_WIDTH: f32 = 30.;
 const BRICK_SIZE: Vec3 = const_vec3!([BRICK_LENGTH, BRICK_WIDTH, 0.]);
 const BRICK_COLOR: Color = Color::rgb(0.7, 0.3, 0.7);
+const BRICK_COUNT: f32 = 12.;
+const BRICK_PADDING: f32 = 15.;
 
 fn main() {
     let mut app = App::new();
@@ -160,23 +162,41 @@ fn startup(mut commands: Commands) {
             ..Default::default()
         });
 
-    // create Brick
-    commands
-        .spawn()
-        .insert(Brick)
-        .insert(Collider)
-        .insert_bundle(SpriteBundle {
-            transform: Transform {
-                translation: BRICK_STARTING_POSITION,
-                scale: BRICK_SIZE,
-                ..Default::default()
-            },
-            sprite: Sprite {
-                color: BRICK_COLOR,
-                ..Default::default()
-            },
-            ..Default::default()
-        });
+    // Create Bricks
+    let bricks_columns = (WALL_WIDTH - WALL_THICKNESS) / (BRICK_LENGTH + BRICK_PADDING); // bricks_per_row = (width - wall_thickness) / brick_length + padding
+    let bricks_rows = BRICK_COUNT / bricks_columns;
+
+    let starting_x = (WALL_WIDTH / -2.) + WALL_THICKNESS;
+    let starting_y = (WALL_HEIGHT / 2.) - WALL_THICKNESS;
+    for y in 0..(bricks_rows.ceil() as i32) {
+        // figure out how many bricks can fit on one row i.e columns
+        for x in 0..(bricks_columns.floor() as i32) {
+            let pos_x =
+                starting_x + (BRICK_LENGTH * x as f32) + BRICK_PADDING + (BRICK_LENGTH / 2.);
+            let pos_y =
+                starting_y - (BRICK_WIDTH * y as f32) - (BRICK_PADDING * 2.) - (BRICK_WIDTH / 2.);
+            let translation = Vec3::new(pos_x, pos_y, 0.);
+
+            println!("pos_x:{pos_x}, pos_y:{pos_y}");
+
+            commands
+                .spawn()
+                .insert(Brick)
+                .insert(Collider)
+                .insert_bundle(SpriteBundle {
+                    transform: Transform {
+                        translation,
+                        scale: BRICK_SIZE,
+                        ..Default::default()
+                    },
+                    sprite: Sprite {
+                        color: BRICK_COLOR,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });
+        }
+    }
 
     // Create Ball
     commands
