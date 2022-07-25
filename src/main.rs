@@ -1,7 +1,6 @@
 use bevy::math::{const_vec2, const_vec3};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
-
 #[cfg(feature = "debug")]
 use bevy_inspector_egui::WorldInspectorPlugin;
 
@@ -31,8 +30,8 @@ const INITIAL_BALL_DIRECTION: Vec2 = const_vec2!([0.5, -0.5]);
 
 // Brick
 const BRICK_STARTING_POSITION: Vec3 = const_vec3!([0., 0., 0.]);
-const BRICK_LENGTH: f32 = 150.;
-const BRICK_WIDTH: f32 = 40.;
+const BRICK_LENGTH: f32 = 130.;
+const BRICK_WIDTH: f32 = 30.;
 const BRICK_SIZE: Vec3 = const_vec3!([BRICK_LENGTH, BRICK_WIDTH, 0.]);
 const BRICK_COLOR: Color = Color::rgb(0.7, 0.3, 0.7);
 
@@ -54,7 +53,7 @@ fn main() {
     #[cfg(feature = "debug")]
     app.add_plugin(WorldInspectorPlugin::new());
 
-    // start up system.
+    // start up system
     app.add_startup_system(startup);
 
     app.add_system_set(
@@ -258,15 +257,17 @@ fn apply_velocity(mut velocity_query: Query<(&mut Transform, &Velocity)>, time: 
     }
 }
 
+// future TODO: make collisions into events to handle what to do on collisions in future. maybe?
 fn check_collisions(
+    mut commands: Commands,
     mut ball_query: Query<(&mut Velocity, &Transform), With<Ball>>,
-    collider_query: Query<(Entity, &Transform), With<Collider>>,
+    collider_query: Query<(Entity, &Transform, Option<&Brick>), With<Collider>>,
 ) {
     let (mut ball_velocity, ball_transform) = ball_query.single_mut();
     let ball_scale = ball_transform.scale.truncate();
 
-    for (_collider_entity, collider_transform) in collider_query.iter() {
-        if let Some(collistion) = collide(
+    for (collider_entity, collider_transform, brick) in collider_query.iter() {
+        if let Some(collision) = collide(
             ball_transform.translation,
             ball_scale,
             collider_transform.translation,
@@ -285,7 +286,7 @@ fn check_collisions(
             //
             // when moving towards the block the ball has a negative x velocity, when it hits the right wall
             // it will match as Collision::Right
-            match collistion {
+            match collision {
                 Collision::Left => reflect_x = ball_velocity.0.x > 0.0,
                 Collision::Right => reflect_x = ball_velocity.0.x < 0.0,
                 Collision::Top => reflect_y = ball_velocity.0.y < 0.0,
@@ -299,6 +300,11 @@ fn check_collisions(
             }
             if reflect_y {
                 ball_velocity.0.y = -ball_velocity.0.y
+            }
+
+            // check if entity is a brick, reduce its life
+            if let Some(_brick) = brick {
+                commands.entity(collider_entity).despawn();
             }
         }
     }
