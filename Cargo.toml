@@ -20,8 +20,8 @@ opt-level = 3
 [dependencies]
 # disable dynamic feature before release
 # ref: https://bevyengine.org/learn/book/getting-started/setup/#enable-fast-compiles-optional
-bevy = { version = "0.7", features = ["dynamic"]}
+bevy = { version = "0.8", features = ["dynamic"] }
 
 # herarchy inspector debug
-bevy-inspector-egui = { version = "0.11", optional = true }
+bevy-inspector-egui = { version = "0.12.1", optional = true }
 

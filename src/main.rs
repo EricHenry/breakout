@@ -1,4 +1,3 @@
-use bevy::math::{const_vec2, const_vec3};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
 #[cfg(feature = "debug")]
@@ -18,55 +17,24 @@ const WALL_RIGHT: f32 = 450.;
 const PADDLE_TO_WALL_BOTTOM: f32 = 60.;
 const PADDLE_LENGTH: f32 = 120.;
 const PADDLE_WIDTH: f32 = 20.;
-const PADDLE_SIZE: Vec3 = const_vec3!([PADDLE_LENGTH, PADDLE_WIDTH, 0.0]);
+const PADDLE_SIZE: Vec3 = Vec3::from_array([PADDLE_LENGTH, PADDLE_WIDTH, 0.0]);
 const PADDLE_COLOR: Color = Color::rgb(0.3, 0.3, 0.7);
 const PADDLE_SPEED: f32 = 500.0;
 
 // Ball
-const BALL_STARTING_POSITION: Vec3 = const_vec3!([0., -50., 1.0]);
-const BALL_SIZE: Vec3 = const_vec3!([30., 30., 0.]);
+const BALL_STARTING_POSITION: Vec3 = Vec3::from_array([0., -50., 1.0]);
+const BALL_SIZE: Vec3 = Vec3::from_array([30., 30., 0.]);
 const BALL_SPEED: f32 = 400.;
-const INITIAL_BALL_DIRECTION: Vec2 = const_vec2!([0.5, -0.5]);
+const INITIAL_BALL_DIRECTION: Vec2 = Vec2::from_array([0.5, -0.5]);
 
 // Brick
 // const BRICK_STARTING_POSITION: Vec3 = const_vec3!([0., 0., 0.]);
 const BRICK_LENGTH: f32 = 130.;
 const BRICK_WIDTH: f32 = 30.;
-const BRICK_SIZE: Vec3 = const_vec3!([BRICK_LENGTH, BRICK_WIDTH, 0.]);
+const BRICK_SIZE: Vec3 = Vec3::from_array([BRICK_LENGTH, BRICK_WIDTH, 0.]);
 const BRICK_COLOR: Color = Color::rgb(0.7, 0.3, 0.7);
-const BRICK_COUNT: f32 = 12.;
 const BRICK_PADDING: f32 = 15.;
-
-fn main() {
-    let mut app = App::new();
-    // set up window, the descriptor will be set by default from the
-    // Default plugins if we don't provide this WindowDescriptor struct
-    app.insert_resource(WindowDescriptor {
-        title: "Breakout!".to_string(),
-        width: 1000.,
-        height: 800.,
-        ..Default::default()
-    })
-    // DefaultPlugins has a system that will render sprites
-    .add_plugins(DefaultPlugins)
-    .add_plugin(HelloPlugin);
-
-    // debug window inspector
-    #[cfg(feature = "debug")]
-    app.add_plugin(WorldInspectorPlugin::new());
-
-    // start up system
-    app.add_startup_system(startup);
-
-    app.add_system_set(
-        SystemSet::new()
-            .with_system(check_collisions)
-            .with_system(move_paddle.before(check_collisions))
-            .with_system(apply_velocity.before(check_collisions)),
-    );
-
-    app.run();
-}
+const BRICK_COUNT: f32 = 12.;
 
 #[derive(Component)]
 struct Paddle;
@@ -133,14 +101,54 @@ impl From<WallLocation> for WallBundle {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum GameState {
+    StartMenu,
+    Playing,
+}
+
+fn main() {
+    let mut app = App::new();
+    // Add the starting state, for now we will put it as playing.
+    app.add_state(GameState::Playing);
+
+    // set up window, the descriptor will be set by default from the
+    // Default plugins if we don't provide this WindowDescriptor struct
+    app.insert_resource(WindowDescriptor {
+        title: "Breakout!".to_string(),
+        width: 1000.,
+        height: 800.,
+        ..Default::default()
+    })
+    // DefaultPlugins has a system that will render sprites
+    .add_plugins(DefaultPlugins)
+    .add_plugin(HelloPlugin);
+
+    // debug window inspector
+    #[cfg(feature = "debug")]
+    app.add_plugin(WorldInspectorPlugin::new());
+
+    app.add_system_set(
+        SystemSet::on_update(GameState::Playing)
+            .with_system(check_collisions)
+            .with_system(move_paddle.before(check_collisions))
+            .with_system(apply_velocity.before(check_collisions)),
+    );
+
+    // start up system
+    app.add_startup_system(startup);
+
+    app.run();
+}
+
 /// Systems
-///
+///--------------------------------------------
 
 /// Startup system, a system that runs only once, before all other systems
 fn startup(mut commands: Commands) {
     // Add camera
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    commands.spawn_bundle(UiCameraBundle::default());
+    commands.spawn_bundle(Camera2dBundle::default());
+    // commands.spawn_bundle(UiCameraBundle::default());
 
     let paddle_y: f32 = WALL_BOTTOM + PADDLE_TO_WALL_BOTTOM;
 
@@ -166,18 +174,15 @@ fn startup(mut commands: Commands) {
     let bricks_columns = (WALL_WIDTH - WALL_THICKNESS) / (BRICK_LENGTH + BRICK_PADDING); // bricks_per_row = (width - wall_thickness) / brick_length + padding
     let bricks_rows = BRICK_COUNT / bricks_columns;
 
-    let starting_x = (WALL_WIDTH / -2.) + WALL_THICKNESS;
-    let starting_y = (WALL_HEIGHT / 2.) - WALL_THICKNESS;
+    let starting_x = (WALL_WIDTH * -0.5) + WALL_THICKNESS;
+    let starting_y = (WALL_HEIGHT * 0.5) - WALL_THICKNESS;
     for y in 0..(bricks_rows.ceil() as i32) {
-        // figure out how many bricks can fit on one row i.e columns
         for x in 0..(bricks_columns.floor() as i32) {
             let pos_x =
-                starting_x + (BRICK_LENGTH * x as f32) + BRICK_PADDING + (BRICK_LENGTH / 2.);
+                starting_x + ((BRICK_LENGTH + BRICK_PADDING) * x as f32) + (BRICK_LENGTH * 0.5);
             let pos_y =
-                starting_y - (BRICK_WIDTH * y as f32) - (BRICK_PADDING * 2.) - (BRICK_WIDTH / 2.);
+                starting_y - ((BRICK_WIDTH + BRICK_PADDING) * y as f32) - (BRICK_WIDTH * 0.5);
             let translation = Vec3::new(pos_x, pos_y, 0.);
-
-            println!("pos_x:{pos_x}, pos_y:{pos_y}");
 
             commands
                 .spawn()
@@ -277,7 +282,7 @@ fn apply_velocity(mut velocity_query: Query<(&mut Transform, &Velocity)>, time: 
     }
 }
 
-// future TODO: make collisions into events to handle what to do on collisions in future. maybe?
+// TODO: make collisions into events to handle what to do on collisions in future. maybe?
 fn check_collisions(
     mut commands: Commands,
     mut ball_query: Query<(&mut Velocity, &Transform), With<Ball>>,
